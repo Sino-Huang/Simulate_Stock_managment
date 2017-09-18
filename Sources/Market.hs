@@ -18,8 +18,8 @@ loanRate = - 0.055
 cashRate :: Double
 cashRate = 0.03
 
-sharesOutstanding :: Integer
-sharesOutstanding = 50000000000
+marketCap :: Integer
+marketCap = 50000000000
 
 -- One day of order execution
 --
@@ -96,7 +96,7 @@ executeOrders p@(cash, holdings) histories orders = case orders of
         | isSelling      -> executeOrders (cash - cost + commission regCommission cost, updatedHoldings) histories xs
         | otherwise      -> executeOrders (cash - cost - commission regCommission cost, updatedHoldings) histories xs
         where
-            buyingMarket     = fromIntegral q > (fromIntegral sharesOutstanding) / price
+            buyingMarket     = fromIntegral q > (fromIntegral marketCap) / price
             isShortingHeld   = isSelling && abs q > quantityHeld
             isSelling        = q < 0
             isShortingReg    = isSelling && quantityHeld <= 0
