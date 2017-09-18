@@ -102,7 +102,7 @@ executeOrders p@(cash, holdings) histories orders = case orders of
             invalidShort     = isSelling
                                 && abs (cost - commission ssCommission cost) > currentWealth
             invalidLong      = not isSelling 
-                                && (cost + commission regCommission cost) > cash
+                                && (cost + commission regCommission cost) > currentWealth
             skipOrder        = executeOrders p histories xs
             quantityHeld
                 | s `notElem` map fst holdings = 0
