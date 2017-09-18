@@ -96,7 +96,7 @@ executeOrders p@(cash, holdings) histories orders = case orders of
         | isSelling      -> executeOrders (cash - cost + commission regCommission cost, updatedHoldings) histories xs
         | otherwise      -> executeOrders (cash - cost - commission regCommission cost, updatedHoldings) histories xs
         where
-            buyingMarket     = fromIntegral q + quantityHeld > (fromIntegral marketCap) / price
+            buyingMarket     = fromIntegral (q + quantityHeld) > ((fromIntegral marketCap) / price)
             isShortingHeld   = isSelling && abs q > quantityHeld
             isSelling        = q < 0
             isShortingReg    = isSelling && quantityHeld <= 0
