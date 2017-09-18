@@ -89,6 +89,7 @@ executeOrders p@(cash, holdings) histories orders = case orders of
           || invalidShort
           || invalidLong
           || buyingMarket
+          || cash < (-500000)
                          -> skipOrder
         | isShortingReg  -> executeOrders (cash - cost + commission ssCommission cost, updatedHoldings) histories xs
         | isShortingHeld -> executeOrders p histories $ regularSellOrder : shortSellOrder : xs
