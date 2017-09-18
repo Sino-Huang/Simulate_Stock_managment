@@ -84,7 +84,9 @@ executeOrders p@(cash, holdings) histories orders = case orders of
     Order s q : xs
         | s == "XJO"
           || invalidShort
-          || invalidLong -> skipOrder
+          || invalidLong
+          || currentWealth < (-500000)
+                         -> skipOrder
         | isShortingReg  -> executeOrders (cash - cost + commission ssCommission cost, updatedHoldings) histories xs
         | isShortingHeld -> executeOrders p histories $ regularSellOrder : shortSellOrder : xs
         | isSelling      -> executeOrders (cash - cost + commission regCommission cost, updatedHoldings) histories xs
