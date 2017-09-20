@@ -51,7 +51,7 @@ makeOrders po@(cash, _) history
          makeShortSellOrder po@(cash, _) history = case history of
              []   -> []
              (s,p):xs
-                 | keyDay p 2 && not (elem s (map fst (snd po))) && cash > 0 -> [Order s (floor (cash * 0.2 / head p))] ++ makeShortSellOrder po xs
+                 | keyDay p 2 && not (elem s (map fst (snd po)))  -> [Order s (abs(floor (cash * 0.2 / head p)))] ++ makeShortSellOrder po xs
                  | otherwise -> makeShortSellOrder po xs
              where
                  keyDay :: [Price] -> Int -> Bool
@@ -70,7 +70,7 @@ makeOrders po@(cash, _) history
          makeBuyOrder po history = case history of
               []   -> []
               (s,p):xs
-                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 4 / head p))] ++ makeBuyOrder po xs
+                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (abs (floor (cash / 4 / head p)))] ++ makeBuyOrder po xs
                    | otherwise -> makeBuyOrder po xs
 
 -- 0 for good, 1 for bad
