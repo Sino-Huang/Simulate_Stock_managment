@@ -17,7 +17,7 @@ import Market
 makeOrders :: Portfolio -> [StockHistory] -> [Order]
 makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
-    | cash < 0.2 * calculateWealth po history = []
+    | cash < 0.1 * calculateWealth po history = makeSellOrder po history
     | otherwise = makeSellOrder po history ++ makeShortSellOrder po history
     ++ makeShortSellBuyBack po history
     ++ makeBuyOrder po history
@@ -27,7 +27,7 @@ makeOrders po@(cash, _) history
          makeSellOrder po history = case po of
              (_, []) -> []
              (_, x:xs)
-                 | (getStockPricex 0 x history - getStockPricex 4 x history) / (getStockPricex 0 x history)  < (-0.05) -> [Order (fst x) (-snd x)] ++ makeSellOrder (fst po, xs) history
+                 | (getStockPricex 0 x history - getStockPricex 4 x history) / (getStockPricex 0 x history)  < (-0.15) -> [Order (fst x) (-snd x)] ++ makeSellOrder (fst po, xs) history
                  | otherwise -> makeSellOrder (fst po, xs) history
 
              where
@@ -40,14 +40,19 @@ makeOrders po@(cash, _) history
          makeShortSellOrder po@(cash, _) history = case history of
              []   -> []
              (s,p):xs
-                 | head p < p !! 1 &&  p!!1 < p !! 2 && p !! 2 < p !! 3 -> [Order s (floor (cash * 0.02 / head p))] ++ makeShortSellOrder po xs
+                 | keyDay p 2 -> [Order s (floor (cash * 0.02 / head p))] ++ makeShortSellOrder po xs
                  | otherwise -> makeShortSellOrder po xs
+             where
+                 keyDay :: [Price] -> Int -> Bool
+                 keyDay p x
+                     | x <= 1 = p !! 1 > p !! 0
+                     | otherwise = p !! x > p !!(x-1) && keyDay p (x-1)
 
          makeShortSellBuyBack :: Portfolio -> [StockHistory] -> [Order]
          makeShortSellBuyBack po history = case po of
             (_, []) -> []
             (_, x:xs)
-                 | snd x < 0 && ((snd $ head $ filter (\y -> fst y == fst x) history)!!0 - (snd $ head $ filter (\y -> fst y == fst x) history)!! 4)/ (snd $ head $ filter (\y -> fst y == fst x) history)!!0 < (-0.10) -> [Order (fst x) (-snd x) ] ++ makeShortSellBuyBack (fst po, xs) history
+                 | snd x < 0 && ((snd $ head $ filter (\y -> fst y == fst x) history)!!0 - (snd $ head $ filter (\y -> fst y == fst x) history)!! 4)/ (snd $ head $ filter (\y -> fst y == fst x) history)!!0 < (-0.1) -> [Order (fst x) (-snd x) ] ++ makeShortSellBuyBack (fst po, xs) history
                  | otherwise -> makeShortSellBuyBack (fst po, xs) history
 
          makeBuyOrder :: Portfolio -> [StockHistory] -> [Order]
