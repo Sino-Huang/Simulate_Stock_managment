@@ -17,8 +17,8 @@ import Market
 makeOrders :: Portfolio -> [StockHistory] -> [Order]
 makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
---    | cash < 0.1 * calculateWealth po history = makeSellOrder po history ++ makeShortSellBuyBack po history
-    | marketCondition history == 1 = sellThemAll po ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history
+    | marketCondition history == 1 =  makeSellOrderAtBadTime po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history
+    | cash < 0 = makeSellOrder po history
     | otherwise = makeSellOrder po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history ++ makeBuyOrder po history
 
      where
@@ -26,8 +26,21 @@ makeOrders po@(cash, _) history
          makeSellOrder po history = case po of
              (_, []) -> []
              (_, x:xs)
-                 | (getStockPricex 0 x history - getStockPricex 4 x history) / (getStockPricex 0 x history)  < (-0.15) -> [Order (fst x) (-snd x)] ++ makeSellOrder (fst po, xs) history
+                 | (getStockPricex 0 x history - getStockPricex 4 x history) / (getStockPricex 0 x history) < (-0.16)  && snd x > 0 -> [Order (fst x) (-snd x)] ++ makeSellOrder (fst po, xs) history
                  | otherwise -> makeSellOrder (fst po, xs) history
+
+             where
+                   getStockPricex :: Int -> Holding -> [StockHistory] -> Price
+                   getStockPricex index s histories = (snd getStock) !! index
+                       where
+                           getStock = head $ filter (\x -> fst x == fst s) histories
+
+         makeSellOrderAtBadTime:: Portfolio -> [StockHistory] -> [Order]
+         makeSellOrderAtBadTime po history = case po of
+             (_, []) -> []
+             (_, x:xs)
+                  | (getStockPricex 0 x history - getStockPricex 4 x history) / (getStockPricex 0 x history)  < (- 0.1)  && snd x > 0 -> [Order (fst x) (-snd x)] ++ makeSellOrderAtBadTime (fst po, xs) history
+                  | otherwise -> makeSellOrderAtBadTime (fst po, xs) history
 
              where
                    getStockPricex :: Int -> Holding -> [StockHistory] -> Price
@@ -39,7 +52,7 @@ makeOrders po@(cash, _) history
          makeShortSellOrder po@(cash, _) history = case history of
              []   -> []
              (s,p):xs
-                 | keyDay p 2 -> [Order s (floor (cash * 0.02 / head p))] ++ makeShortSellOrder po xs
+                 | keyDay p 2 && not (elem s (map fst (snd po))) && cash > 0 -> [Order s (floor (cash * 0.2 / head p))] ++ makeShortSellOrder po xs
                  | otherwise -> makeShortSellOrder po xs
              where
                  keyDay :: [Price] -> Int -> Bool
@@ -58,7 +71,7 @@ makeOrders po@(cash, _) history
          makeBuyOrder po history = case history of
               []   -> []
               (s,p):xs
-                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 3 / head p))] ++ makeBuyOrder po xs
+                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 4 / head p))] ++ makeBuyOrder po xs
                    | otherwise -> makeBuyOrder po xs
 
 -- 0 for good, 1 for bad
@@ -73,12 +86,12 @@ makeOrders po@(cash, _) history
                      | p !! 2 > p !! 1 && p !! 1 > p !! 0 = True
                      | otherwise = False
 
-         sellThemAll :: Portfolio -> [Order]
-         sellThemAll po@(cash,holding) = case holding of
-             [] -> []
-             (s, q):xs
-                 | q > 0 -> [Order s (-q)] ++ sellThemAll (cash, xs)
-                 | otherwise -> sellThemAll (cash, xs)
+--         sellThemAll :: Portfolio -> [Order]
+--         sellThemAll po@(cash,holding) = case holding of
+--             [] -> []
+--             (s, q):xs
+--                 | q > 0 -> [Order s (-q)] ++ sellThemAll (cash, xs)
+--                 | otherwise -> sellThemAll (cash, xs)
 
 
 
