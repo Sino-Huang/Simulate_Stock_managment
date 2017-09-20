@@ -17,10 +17,9 @@ import Market
 makeOrders :: Portfolio -> [StockHistory] -> [Order]
 makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
-    | cash < 0.1 * calculateWealth po history = makeSellOrder po history
-    | otherwise = makeSellOrder po history ++ makeShortSellOrder po history
-    ++ makeShortSellBuyBack po history
-    ++ makeBuyOrder po history
+--    | cash < 0.1 * calculateWealth po history = makeSellOrder po history ++ makeShortSellBuyBack po history
+    | marketCondition history == 1 = sellThemAll po ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history
+    | otherwise = makeSellOrder po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history ++ makeBuyOrder po history
 
      where
          makeSellOrder :: Portfolio -> [StockHistory] -> [Order]
@@ -52,15 +51,34 @@ makeOrders po@(cash, _) history
          makeShortSellBuyBack po history = case po of
             (_, []) -> []
             (_, x:xs)
-                 | snd x < 0 && ((snd $ head $ filter (\y -> fst y == fst x) history)!!0 - (snd $ head $ filter (\y -> fst y == fst x) history)!! 4)/ (snd $ head $ filter (\y -> fst y == fst x) history)!!0 < (-0.1) -> [Order (fst x) (-snd x) ] ++ makeShortSellBuyBack (fst po, xs) history
+                 | snd x < 0 && ((snd $ head $ filter (\y -> fst y == fst x) history)!!0 - (snd $ head $ filter (\y -> fst y == fst x) history)!! 4)/ (snd $ head $ filter (\y -> fst y == fst x) history)!!0 < (-0.15) -> [Order (fst x) (-snd x) ] ++ makeShortSellBuyBack (fst po, xs) history
                  | otherwise -> makeShortSellBuyBack (fst po, xs) history
 
          makeBuyOrder :: Portfolio -> [StockHistory] -> [Order]
          makeBuyOrder po history = case history of
               []   -> []
               (s,p):xs
-                   | (head p -  p!!4)/ (head p) > 0.05 -> [Order s (floor (cash / 19 / head p))] ++ makeBuyOrder po xs
+                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 7 / head p))] ++ makeBuyOrder po xs
                    | otherwise -> makeBuyOrder po xs
+
+-- 0 for good, 1 for bad
+         marketCondition :: [StockHistory] -> Integer
+         marketCondition history
+             | ((fromIntegral $ length(filter (\x -> x == True) (map whetherContinueDrop (map snd history)))) / (fromIntegral $ length((map whetherContinueDrop (map snd history))))) > 0.75 = 1
+             | otherwise = 0
+
+             where
+                 whetherContinueDrop :: [Price] -> Bool
+                 whetherContinueDrop p
+                     | p !! 4 > p !! 3 && p !! 3 > p !! 2 && p !! 2 > p !! 1 && p !! 1 > p !! 0 = True
+                     | otherwise = False
+
+         sellThemAll :: Portfolio -> [Order]
+         sellThemAll po@(cash,holding) = case holding of
+             [] -> []
+             (s, q):xs
+                 | q > 0 -> [Order s (-q)] ++ sellThemAll (cash, xs)
+                 | otherwise -> sellThemAll (cash, xs)
 
 
 
