@@ -17,7 +17,8 @@ import Market
 makeOrders :: Portfolio -> [StockHistory] -> [Order]
 makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
-    | marketCondition history == 1 =  makeSellOrderAtBadTime po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history ++ makeBuyOrder po history
+    | cash < 0 = makeSellOrder po history ++ makeShortSellBuyBack po history
+    | marketCondition history == 1 =  makeSellOrderAtBadTime po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history ++ makeBuyOrderAtBadTime po history
     | otherwise = makeSellOrder po history ++ makeShortSellOrder po history ++ makeShortSellBuyBack po history ++ makeBuyOrder po history
 
      where
@@ -72,6 +73,19 @@ makeOrders po@(cash, _) history
               (s,p):xs
                    | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (abs (floor (cash / 4 / head p)))] ++ makeBuyOrder po xs
                    | otherwise -> makeBuyOrder po xs
+
+         makeBuyOrderAtBadTime :: Portfolio -> [StockHistory] -> [Order]
+         makeBuyOrderAtBadTime po history = case history of
+              []   -> []
+              (s,p):xs
+                   | (head p -  p!!4)/ (head p) > 0.11 && (keyDay' p 4) -> [Order s (abs (floor (cash / 4 / head p)))] ++ makeBuyOrderAtBadTime po xs
+                   | otherwise -> makeBuyOrderAtBadTime po xs
+              where
+                 keyDay' :: [Price] -> Int -> Bool
+                 keyDay' p x
+                     | x <= 1 = p !! 1 < p !! 0
+                     | otherwise = p !! x < p !!(x-1) && keyDay' p (x-1)
+
 
 -- 0 for good, 1 for bad
          marketCondition :: [StockHistory] -> Integer
