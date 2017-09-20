@@ -58,19 +58,19 @@ makeOrders po@(cash, _) history
          makeBuyOrder po history = case history of
               []   -> []
               (s,p):xs
-                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 7 / head p))] ++ makeBuyOrder po xs
+                   | (head p -  p!!4)/ (head p) > 0.11 -> [Order s (floor (cash / 3 / head p))] ++ makeBuyOrder po xs
                    | otherwise -> makeBuyOrder po xs
 
 -- 0 for good, 1 for bad
          marketCondition :: [StockHistory] -> Integer
          marketCondition history
-             | ((fromIntegral $ length(filter (\x -> x == True) (map whetherContinueDrop (map snd history)))) / (fromIntegral $ length((map whetherContinueDrop (map snd history))))) > 0.75 = 1
+             | ((fromIntegral $ length(filter (\x -> x == True) (map whetherContinueDrop (map snd history)))) / (fromIntegral $ length((map whetherContinueDrop (map snd history))))) > 0.8 = 1
              | otherwise = 0
 
              where
                  whetherContinueDrop :: [Price] -> Bool
                  whetherContinueDrop p
-                     | p !! 4 > p !! 3 && p !! 3 > p !! 2 && p !! 2 > p !! 1 && p !! 1 > p !! 0 = True
+                     | p !! 2 > p !! 1 && p !! 1 > p !! 0 = True
                      | otherwise = False
 
          sellThemAll :: Portfolio -> [Order]
