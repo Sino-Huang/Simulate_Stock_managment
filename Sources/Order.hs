@@ -17,7 +17,7 @@ import Market
 makeOrders :: Portfolio -> [StockHistory] -> [Order]
 makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
-    | cash < 0.5 * calculateWealth po history = []
+    | cash < 0.2 * calculateWealth po history = []
     | otherwise = makeSellOrder po history ++ makeShortSellOrder po history
     ++ makeShortSellBuyBack po history
     ++ makeBuyOrder po history
