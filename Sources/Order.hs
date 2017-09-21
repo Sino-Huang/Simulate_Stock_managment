@@ -140,7 +140,7 @@ makeOrders po@(cash, _) history
     | (length $ snd $ head history) < 5 = []
 -- try to keep cash more than 0, thus only execute makeSellOrder and makeShortSellBuyBack
     | cash < 0 = makeSellOrder po history ++ makeShortSellBuyBack po history
--- when the market condition is bad, the conditions imposed on buying in were stringent, while the conditions on sell out were loosen
+-- when the market condition is bad, the conditions imposed on buying in were stringent, while the conditions on selling out were loosen
     | marketCondition history == 1 =  makeSellOrderAtBadTime po history ++ makeShortSellOrder 2 po history ++ makeShortSellBuyBack po history ++ makeBuyOrderAtBadTime po history
     | otherwise = makeSellOrder po history ++ makeShortSellOrder 4 po history ++ makeShortSellBuyBack po history ++ makeBuyOrder po history
 
